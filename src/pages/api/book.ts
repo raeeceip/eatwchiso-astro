@@ -19,7 +19,7 @@ interface BookingRequest {
 const WORKER_URL = 'https://eatwchiso-bookings.chiboguchisomu.workers.dev';
 
 // Initialize Resend only if API key is available
-const resend = import.meta.env.RESEND_API_KEY ? new Resend(import.meta.env.RESEND_API_KEY) : null;
+const resend = import.meta.env.PUBLIC_RESEND_API_KEY ? new Resend(import.meta.env.PUBLIC_RESEND_API_KEY) : null;
 
 export const prerender = false;
 
