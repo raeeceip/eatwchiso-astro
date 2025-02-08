@@ -1,76 +1,85 @@
 .terminal {
   background-color: #0A0A0A;
   color: #FF6600;
-  border: 2px solid #FF6600;
-  border-radius: 8px;
-  max-width: 800px;
-  margin: 2rem auto;
-  font-family: 'Courier New', monospace;
-  box-shadow: 0 0 20px rgba(255, 102, 0, 0.2);
-  overflow: hidden;
+  width: 100%;
+  height: 100vh;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .terminalHeader {
   background-color: #FF6600;
   color: #0A0A0A;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   font-weight: bold;
-  text-align: center;
-  border-bottom: 2px solid #FF6600;
-}
-
-.terminalBody {
-  padding: 1.5rem;
-  min-height: 400px;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.terminalPrompt {
-  font-family: 'Courier New', monospace;
-  font-size: 1rem;
-  margin-bottom: 1rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  border-bottom: 1px solid #FF8533;
+  user-select: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.promptUser {
-  color: #00FF66;
-  font-weight: bold;
+.terminalBody {
+  flex: 1;
+  padding: clamp(0.5rem, 2vw, 1rem);
+  overflow-y: auto;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  line-height: 1.4;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  position: relative;
+  height: calc(100vh - 2.5rem);
 }
 
-.promptAt {
+.terminalPrompt {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.promptArrow {
   color: #FF6600;
   margin: 0 0.25rem;
 }
 
-.promptHost {
-  color: #00FFFF;
+.promptPath {
+  color: #00A4EF;
   font-weight: bold;
+  word-break: break-all;
 }
 
-.promptColon {
-  color: #FF6600;
+.promptGit {
+  color: #7FBA00;
+  margin-left: 0.5rem;
 }
 
-.promptCommand {
+.promptBranch {
   color: #FF6600;
-  font-style: italic;
+  margin-left: 0.25rem;
 }
 
 .responses {
   margin-bottom: 1rem;
-  padding-left: 0.5rem;
+  padding-bottom: 60px;
 }
 
 .response {
   margin: 0;
   padding: 0.25rem 0;
   white-space: pre-wrap;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .response.info {
@@ -78,49 +87,133 @@
 }
 
 .response.error {
-  color: #FF3300;
+  color: #FF4444;
 }
 
 .response.success {
-  color: #00FF66;
+  color: #7FBA00;
 }
 
 .response.system {
-  color: #4D4D4D;
+  color: #CCCCCC;
 }
 
 .response.input {
-  color: #FF6600;
+  color: #FF8533;
   font-weight: bold;
 }
 
 .response.prompt {
-  color: #00FFFF;
+  color: #00A4EF;
+}
+
+.response.menu {
+  color: #FF6600;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border: 1px solid #FF6600;
+  border-radius: 4px;
+  background-color: rgba(255, 102, 0, 0.1);
+  overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.response.menu + .response.menu {
+  display: none;
+}
+
+.menuSection {
+  margin: 1rem 0;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 102, 0, 0.3);
+  border-radius: 4px;
+  background-color: rgba(255, 102, 0, 0.05);
+}
+
+.menuTitle {
+  color: #FF8533;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 102, 0, 0.2);
+  padding-bottom: 0.25rem;
+}
+
+.menuCategory {
+  margin: 1rem 0;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(255, 102, 0, 0.3);
+}
+
+.menuCategoryTitle {
+  color: #FF8533;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.menuItem {
+  margin: 0.75rem 0;
+  padding-left: 1rem;
+}
+
+.menuItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.menuItemName {
+  color: #FF6600;
+  font-weight: bold;
+}
+
+.menuPrice {
+  color: #7FBA00;
+  white-space: nowrap;
+}
+
+.menuDescription {
+  color: #999;
+  font-size: 0.875em;
+  margin-top: 0.25rem;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 102, 0, 0.2);
 }
 
 .inputLine {
   display: flex;
   align-items: center;
-  margin-top: 0.5rem;
   padding: 0.25rem 0;
-  padding-left: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
-.promptSymbol {
-  color: #00FFFF;
-  margin-right: 0.75rem;
-  font-size: 1.2rem;
-  user-select: none;
+.inputPrompt {
+  display: flex;
+  align-items: center;
+  color: #FF6600;
+  margin-right: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.inputPromptPath {
+  color: #00A4EF;
+  margin: 0 0.25rem;
+  word-break: break-all;
 }
 
 .terminalInput {
   background-color: transparent;
   border: none;
-  color: #FF6600;
-  font-family: 'Courier New', monospace;
-  font-size: 1rem;
-  padding: 0.25rem 0;
-  width: 100%;
+  color: #FF8533;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+  padding: 0;
+  flex: 1;
+  min-width: 50px;
   outline: none;
 }
 
@@ -133,9 +226,46 @@
   cursor: not-allowed;
 }
 
+.inputContainer {
+  position: sticky;
+  bottom: 0;
+  background-color: #0A0A0A;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 102, 0, 0.2);
+  margin: 0 -0.5rem;
+}
+
+/* Command suggestions */
+.suggestions {
+  margin-top: 0.25rem;
+  padding-left: 1rem;
+  color: #666666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.suggestion {
+  color: #FF8533;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.suggestion:hover {
+  text-decoration: underline;
+}
+
+/* History navigation indicator */
+.historyIndicator {
+  position: absolute;
+  right: 1rem;
+  color: #666666;
+  font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
+}
+
 /* Custom scrollbar */
 .terminalBody::-webkit-scrollbar {
-  width: 8px;
+  width: clamp(4px, 1vw, 8px);
 }
 
 .terminalBody::-webkit-scrollbar-track {
@@ -148,5 +278,65 @@
 }
 
 .terminalBody::-webkit-scrollbar-thumb:hover {
-  background: #CC5200;
+  background: #FF8533;
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+  .terminalBody {
+    padding: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    scroll-padding-bottom: 60px;
+  }
+
+  .menuItem {
+    padding-left: 0.5rem;
+  }
+
+  .menuDescription {
+    padding-left: 0.5rem;
+  }
+}
+
+/* Improve touch scrolling */
+@supports (-webkit-touch-callout: none) {
+  .terminalBody {
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Landscape mode optimizations */
+@media (max-height: 480px) and (orientation: landscape) {
+  .terminalBody {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .terminalHeader {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .response {
+    padding: 0.125rem 0;
+  }
+
+  .menuDescription {
+    font-size: 0.75rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .suggestion {
+    padding: 0.5rem;
+  }
+
+  .inputLine {
+    padding: 0.5rem 0;
+  }
+
+  .terminalInput {
+    padding: 0.25rem 0;
+  }
 }

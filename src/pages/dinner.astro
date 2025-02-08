@@ -1,0 +1,66 @@
+---
+import { BookingForm } from "../components/BookingForm";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Dinner time!">
+	<head>
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		
+		<!-- Primary Meta Tags -->
+		<meta name="title" content="Terminal Booking - Eat with Chiso" />
+		<meta
+			name="description"
+			content="Book your dinner experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://eatwchiso.pages.dev/" />
+		<meta property="og:title" content="Terminal Booking - Eat with Chiso" />
+		<meta
+			property="og:description"
+			content="Book your dinner experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+		<meta property="og:image" content="/terminal-preview.png" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content="https://eatwchiso.pages.dev/" />
+		<meta property="twitter:title" content="Terminal Booking - Eat with Chiso" />
+		<meta
+			property="twitter:description"
+			content="Book your dinner experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+		<meta property="twitter:image" content="/terminal-preview.png" />
+	</head>
+	<main>
+		<BookingForm client:load initialPath="/dinner" />
+	</main>
+</Layout>
+
+<style>
+	:root {
+		background-color: #0A0A0A;
+	}
+
+	main {
+		height: 100vh;
+		width: 100vw;
+		overflow: hidden;
+	}
+
+	/* Remove any margin/padding from body */
+	:global(body) {
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	/* Ensure the layout takes full height */
+	:global(#app) {
+		height: 100vh;
+		overflow: hidden;
+	}
+</style>

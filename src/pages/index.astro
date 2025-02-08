@@ -1,27 +1,94 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { BookingForm } from '../components/BookingForm';
-import '../styles/global.css';
+import { BookingForm } from '../components/BookingForm.tsx';
 ---
 
-<Layout title="Eat with Chiso - Terminal Booking System">
-  <main>
-    <div class="container">
-      <BookingForm client:load />
-    </div>
-  </main>
+<Layout title="Chef Chiso's Terminal">
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		
+		<!-- Primary Meta Tags -->
+		<meta name="title" content="Terminal Booking - Eat with Chiso" />
+		<meta
+			name="description"
+			content="Book your breakfast experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://eatwchiso.pages.dev/" />
+		<meta property="og:title" content="Terminal Booking - Eat with Chiso" />
+		<meta
+			property="og:description"
+			content="Book your breakfast experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+		<meta property="og:image" content="/terminal-preview.png" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:url" content="https://eatwchiso.pages.dev/" />
+		<meta
+			property="twitter:title"
+			content="Terminal Booking - Eat with Chiso"
+		/>
+		<meta
+			property="twitter:description"
+			content="Book your breakfast experience with Chef Chiso through our unique terminal-style booking system."
+		/>
+		<meta property="twitter:image" content="/terminal-preview.png" />
+	</head>
+	<main>
+		<BookingForm client:load />
+	</main>
 </Layout>
 
 <style>
-  main {
-    min-height: 100vh;
-    padding: 2rem 0;
-    background-color: var(--color-background);
-  }
+	:root {
+		background-color: #0A0A0A;
+		height: 100%;
+		overflow: hidden;
+	}
 
-  .container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 1rem;
-  }
+	:global(html), :global(body) {
+		height: 100%;
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		position: fixed;
+		width: 100%;
+		-webkit-text-size-adjust: 100%;
+	}
+
+	main {
+		margin: auto;
+		padding: 1rem;
+		width: 800px;
+		max-width: calc(100% - 2rem);
+		color: white;
+		font-size: 20px;
+		line-height: 1.6;
+	}
+
+	/* iOS Safari specific fixes */
+	@supports (-webkit-touch-callout: none) {
+		:global(body) {
+			/* Prevent elastic scrolling */
+			position: fixed;
+			width: 100%;
+		}
+
+		main {
+			/* Account for iOS Safari's bottom bar */
+			height: -webkit-fill-available;
+		}
+	}
+
+	/* Prevent text zoom on orientation change */
+	@media screen and (orientation: landscape) {
+		:global(html) {
+			-webkit-text-size-adjust: none;
+		}
+	}
 </style>

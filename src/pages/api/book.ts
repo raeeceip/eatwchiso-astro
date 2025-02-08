@@ -1,7 +1,21 @@
-import type { APIRoute } from 'astro';
+import type { APIRoute } from "astro";
 import { Resend } from 'resend';
 
-interface BookingRequest {
+// Access environment variables
+const WORKER_URL = import.meta.env.PUBLIC_CLOUDFLARE_WORKER_URL;
+const WORKER_API_KEY = import.meta.env.PUBLIC_CLOUDFLARE_API_KEY;
+const RESEND_API_KEY = import.meta.env.PUBLIC_RESEND_API_KEY;
+
+// Debug environment variables
+console.log('Environment Variables:', {
+  WORKER_URL: WORKER_URL ? 'set' : 'not set',
+  WORKER_API_KEY: WORKER_API_KEY ? 'set' : 'not set',
+  RESEND_API_KEY: RESEND_API_KEY ? 'set' : 'not set'
+});
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+
+interface BookingData {
   name: string;
   email: string;
   date: string;
@@ -10,188 +24,148 @@ interface BookingRequest {
   preferences: {
     pancakeType: string;
     eggStyle: string;
-    sides: string[];
     meat: string;
+    sides: string[];
     additions: string[];
   };
 }
 
-const WORKER_URL = 'https://eatwchiso-bookings.chiboguchisomu.workers.dev';
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const body = await request.json() as BookingData;
 
-// Initialize Resend only if API key is available
-const resend = import.meta.env.PUBLIC_RESEND_API_KEY ? new Resend(import.meta.env.PUBLIC_RESEND_API_KEY) : null;
-
-export const prerender = false;
-
-export const GET: APIRoute = async ({ request }) => {
-  const url = new URL(request.url);
-  const date = url.searchParams.get('date');
-  const time = url.searchParams.get('time');
-
-  if (!date || !time) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'Date and time are required'
-      }),
-      {
+    // Validate required fields
+    if (!body.name || !body.email || !body.date || !body.time || !body.partySize) {
+      return new Response(JSON.stringify({
+        error: 'Missing required fields'
+      }), {
         status: 400,
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
+          'Content-Type': 'application/json'
         }
-      }
-    );
-  }
-
-  try {
-    const response = await fetch(`${WORKER_URL}/availability?date=${date}&time=${time}`);
-    const data = await response.json();
-
-    return new Response(
-      JSON.stringify(data),
-      {
-        status: response.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : 'Internal server error'
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*'
-        }
-      }
-    );
-  }
-};
-
-export const POST: APIRoute = async ({ request }) => {
-  // Handle CORS preflight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
-
-  try {
-    const body = await request.json() as BookingRequest;
-    
-    // Validate date format
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(body.date)) {
-      throw new Error('Invalid date format. Use YYYY-MM-DD');
+      });
     }
-
-    // Validate time format
-    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(body.time)) {
-      throw new Error('Invalid time format. Use HH:MM');
-    }
-
-    // Check availability with the worker
-    const response = await fetch(`${WORKER_URL}/book`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to book appointment');
-    }
-
-    const data = await response.json();
 
     // Generate a confirmation ID
     const confirmationId = `CHISO-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-    
+
+    // Store the booking in Cloudflare Workers KV
+    if (!WORKER_URL) {
+      throw new Error('Worker URL not configured. Please check your environment variables.');
+    }
+
+    console.log('Sending booking to worker:', {
+      url: WORKER_URL,
+      hasApiKey: !!WORKER_API_KEY,
+      booking: {
+        id: confirmationId,
+        ...body,
+      }
+    });
+
+    const workerResponse = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': WORKER_API_KEY || ''
+      },
+      body: JSON.stringify({
+        action: 'createBooking',
+        booking: {
+          id: confirmationId,
+          ...body,
+          createdAt: new Date().toISOString()
+        }
+      })
+    });
+
+    if (!workerResponse.ok) {
+      const error = await workerResponse.text();
+      console.error('Worker error response:', error);
+      throw new Error(`Worker error: ${error}`);
+    }
+
     // Format the email content
     const emailContent = `
 Dear ${body.name},
 
-Thank you for booking with Eat with Chiso! Here are your booking details:
+Thank you for booking with Chef Chiso! Here are your booking details:
 
 Date: ${new Date(body.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Time: ${body.time}
 Party Size: ${body.partySize}
 
-Your Menu Selections:
-- Pancakes: ${body.preferences.pancakeType}
-${body.preferences.eggStyle ? `- Eggs: ${body.preferences.eggStyle}` : ''}
+Menu Selections:
+${body.preferences.pancakeType ? `- Pancakes: ${body.preferences.pancakeType}` : ''}
+${body.preferences.eggStyle !== 'none' ? `- Eggs: ${body.preferences.eggStyle}` : ''}
+${body.preferences.meat !== 'none' ? `- Meat: ${body.preferences.meat}` : ''}
 ${body.preferences.sides.length > 0 ? `- Sides: ${body.preferences.sides.join(', ')}` : ''}
-${body.preferences.meat ? `- Meat: ${body.preferences.meat}` : ''}
 ${body.preferences.additions.length > 0 ? `- Additions: ${body.preferences.additions.join(', ')}` : ''}
 
 Confirmation ID: ${confirmationId}
 
-Please keep this confirmation ID for your records. If you need to make any changes to your booking, please contact us with this ID.
+Please keep this confirmation ID for your records. If you need to make any changes to your booking, please contact me directly.
 
 Best regards,
-Eat with Chiso Team`;
+Chef Chiso`;
 
     // Send confirmation email using Resend if available
-    let emailSent = false;
+    let emailResult = { success: false, error: null };
     if (resend) {
       try {
-        const emailResult = await resend.emails.send({
-          from: 'Eat with Chiso <bookings@eatwchiso.com>',
+        const result = await resend.emails.send({
+          from: 'onboarding@resend.dev', // Keep this for now until domain is verified
+          reply_to: 'Chiso <chiboguchisomu@gmail.com>', // Replies will go to your Gmail
           to: body.email,
-          subject: 'Your Eat with Chiso Booking Confirmation',
+          subject: 'Your Chef Chiso Booking Confirmation',
           text: emailContent,
         });
-        emailSent = !emailResult.error;
-      } catch (error) {
-        console.error('Failed to send email:', error);
+        
+        if (result.error) {
+          emailResult = { 
+            success: false, 
+            error: typeof result.error === 'object' ? 
+              result.error.message || 'Unknown email error' : 
+              String(result.error)
+          };
+        } else {
+          emailResult = { success: true, error: null };
+        }
+      } catch (error: any) {
+        console.error('Email error:', error);
+        emailResult = { 
+          success: false, 
+          error: error.message || 'Failed to send email confirmation'
+        };
       }
+    } else {
+      emailResult = { 
+        success: false, 
+        error: 'Email service not configured. Please contact Chef Chiso directly to receive your confirmation email.'
+      };
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          confirmationId,
-          message: emailSent 
-            ? 'Booking confirmed! Check your email for confirmation details.'
-            : 'Booking confirmed! Email confirmation could not be sent.',
-        },
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+    return new Response(JSON.stringify({
+      success: true,
+      confirmationId,
+      emailSent: emailResult.success,
+      emailError: emailResult.error
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
       }
-    );
-  } catch (error) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Failed to process booking',
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
+    });
+
+  } catch (error: any) {
+    console.error('Booking error:', error);
+    return new Response(JSON.stringify({
+      error: error.message || 'Failed to process booking'
+    }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
       }
-    );
+    });
   }
 };

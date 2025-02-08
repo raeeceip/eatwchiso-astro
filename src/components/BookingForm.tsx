@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import styles from './BookingForm.module.css';
 
 interface BookingFormData {
@@ -16,262 +16,647 @@ interface BookingFormData {
   };
 }
 
-interface TerminalResponse {
-  timestamp: string;
-  type: 'info' | 'error' | 'success' | 'system' | 'input' | 'prompt';
+interface Response {
+  type: 'info' | 'error' | 'success' | 'system' | 'input' | 'prompt' | 'menu';
   message: string;
+  timestamp: string;
 }
 
-const MENU_OPTIONS = {
-  pancakeTypes: ['Buttermilk', 'Chocolate Chip', 'Blueberry', 'Banana'],
-  eggStyles: ['Scrambled', 'Over Easy', 'Sunny Side Up', 'Poached'],
-  sides: ['Hash Browns', 'Toast', 'Fruit Bowl', 'Grits'],
-  meats: ['Bacon', 'Sausage', 'Ham', 'None'],
-  additions: ['Extra Syrup', 'Whipped Cream', 'Nuts', 'Chocolate Sauce']
-};
+interface Props {
+  initialPath?: string;
+}
 
-const WORKER_URL = 'https://eatwchiso-bookings.chiboguchisomu.workers.dev';
-
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-};
-
-export const BookingForm = () => {
-  const [formData, setFormData] = useState<BookingFormData>({
-    name: '',
-    email: '',
-    date: '',
-    time: '',
-    partySize: '',
+export const BookingForm = ({ initialPath = "/" }: Props) => {
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [currentInput, setCurrentInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPath, setCurrentPath] = useState(initialPath);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [bookingData, setBookingData] = useState<BookingFormData>({
+    name: "",
+    email: "",
+    date: "",
+    time: "",
+    partySize: "",
     preferences: {
-      pancakeType: '',
-      eggStyle: '',
+      pancakeType: "",
+      eggStyle: "",
       sides: [],
-      meat: '',
+      meat: "",
       additions: []
     }
   });
-  const [responses, setResponses] = useState<TerminalResponse[]>([]);
-  const [currentInput, setCurrentInput] = useState<keyof BookingFormData | keyof BookingFormData['preferences']>('name');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+
   const terminalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initialize terminal
-    const timestamp = new Date().toLocaleTimeString();
-    setResponses([
-      { timestamp, type: 'system', message: 'Initializing booking system...' },
-      { timestamp, type: 'system', message: `Connected to booking service at ${WORKER_URL}` },
-      { timestamp, type: 'system', message: 'Ready to process your booking request.' },
-      { timestamp, type: 'prompt', message: 'Please enter your name:' }
-    ]);
-  }, []);
-
-  useEffect(() => {
-    // Scroll to bottom when new responses are added
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
-    // Focus input when current input changes
-    inputRef.current?.focus();
-  }, [responses, currentInput]);
+  }, [responses]);
 
-  const addResponse = (type: TerminalResponse['type'], message: string) => {
+  useEffect(() => {
+    // Fetch and display menu on page load
+    fetchMenu();
+  }, [currentPath]);
+
+  const formatMenu = (menu: any) => {
+    let formattedMenu = `🍽️  Today's ${currentPath.slice(1)} Menu:\n\n`;
+    
+    Object.entries(menu).forEach(([category, items]: [string, any]) => {
+      formattedMenu += `${category}\n`;
+      items.forEach((item: any) => {
+        formattedMenu += `  • ${item.name} - $${item.price}\n`;
+        if (item.description) {
+          formattedMenu += `    ${item.description}\n`;
+        }
+      });
+      formattedMenu += '\n';
+    });
+    
+    return formattedMenu;
+  };
+
+  const fetchMenu = async () => {
+    try {
+      const mealType = currentPath.replace('/', '') || 'breakfast';
+      const response = await fetch(`/api/menu?type=${mealType}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu');
+      }
+      const data = await response.json();
+
+      // Clear any previous menu responses
+      setResponses(prev => prev.filter(r => !r.message.includes("Today's")));
+      
+      addResponse('system', formatMenu(data));
+    } catch (error) {
+      console.error('Menu fetch error:', error);
+      addResponse('error', 'Failed to fetch menu. Please try again.');
+    }
+  };
+
+  const steps = [
+    {
+      prompt: "Please enter your name:",
+      field: "name",
+      validation: "name",
+      error: "Name must be at least 2 characters long"
+    },
+    {
+      prompt: "Please enter your email:",
+      field: "email",
+      validation: "email",
+      error: "Please enter a valid email address"
+    },
+    {
+      prompt: "Enter the date (YYYY-MM-DD):",
+      field: "date",
+      validation: "date",
+      error: "Please enter a valid date (YYYY-MM-DD)"
+    },
+    {
+      prompt: "Enter the time (HH:MM):",
+      field: "time",
+      validation: "time",
+      error: "Please enter a valid time (HH:MM)"
+    },
+    {
+      prompt: "Enter party size:",
+      field: "partySize",
+      validation: "partySize",
+      error: "Please enter a valid party size (1 or more)"
+    },
+    {
+      prompt: "Select pancake type (enter the number):\n1. Classic Buttermilk ($12.99)\n2. Chocolate Chip ($14.99)\n3. Blueberry ($14.99)",
+      field: "preferences.pancakeType",
+      validation: "pancakeType",
+      error: "Please select a valid option (1-3)",
+      options: {
+        "1": "buttermilk",
+        "2": "chocolate",
+        "3": "blueberry"
+      }
+    },
+    {
+      prompt: "How would you like your eggs? (enter the number):\n1. Scrambled\n2. Sunny-side-up\n3. Over-easy\n4. No eggs",
+      field: "preferences.eggStyle",
+      validation: "eggStyle",
+      error: "Please select a valid option (1-4)",
+      options: {
+        "1": "scrambled",
+        "2": "sunny-side-up",
+        "3": "over-easy",
+        "4": "none"
+      }
+    },
+    {
+      prompt: "Select meat (enter the number):\n1. Bacon ($4.99)\n2. Sausage ($4.99)\n3. Ham ($4.99)\n4. No meat",
+      field: "preferences.meat",
+      validation: "meat",
+      error: "Please select a valid option (1-4)",
+      options: {
+        "1": "bacon",
+        "2": "sausage",
+        "3": "ham",
+        "4": "none"
+      }
+    },
+    {
+      prompt: "Would you like to confirm your order? (yes/no):",
+      field: "confirmation",
+      validation: "confirmation",
+      error: "Please enter yes or no"
+    }
+  ];
+
+  const commands = {
+    help: () => {
+      addResponse('info', `
+Available commands:
+  cd [dir]     - Change directory (breakfast/lunch/dinner)
+  ls, dir      - List available directories
+  pwd          - Print working directory
+  clear        - Clear the terminal
+  menu         - Show today's menu
+  history      - Show command history
+  help         - Show this help message
+  book         - Start booking process`);
+    },
+    menu: () => fetchMenu(),
+    history: () => {
+      addResponse('info', '\nCommand history:');
+      commandHistory.forEach((cmd, i) => {
+        addResponse('system', `${i + 1}  ${cmd}`);
+      });
+    }
+  };
+
+  const validateInput = (value: string, validation: string): boolean => {
+    switch (validation) {
+      case "name":
+        return value.length >= 2;
+      case "email":
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      case "date":
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(value)) return false;
+        const date = new Date(value);
+        return date instanceof Date && !isNaN(date.getTime()) && date >= new Date();
+      case "time":
+        return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+      case "partySize":
+        const size = parseInt(value);
+        return !isNaN(size) && size > 0 && size <= 10;
+      case "pancakeType":
+        return ["1", "2", "3"].includes(value);
+      case "eggStyle":
+        return ["1", "2", "3", "4"].includes(value);
+      case "meat":
+        return ["1", "2", "3", "4"].includes(value);
+      case "confirmation":
+        return ["yes", "no"].includes(value.toLowerCase());
+      default:
+        return true;
+    }
+  };
+
+  const addResponse = (type: Response['type'], message: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setResponses(prev => [...prev, { timestamp, type, message }]);
-  };
-
-  const handleInputSubmit = (value: string) => {
-    addResponse('input', `$ ${value}`);
-
-    switch (currentInput) {
-      case 'name':
-        if (!value.trim()) {
-          addResponse('error', 'Name cannot be empty');
-          addResponse('prompt', 'Please enter your name:');
-          return;
-        }
-        setFormData(prev => ({ ...prev, name: value }));
-        setCurrentInput('email');
-        addResponse('prompt', 'Please enter your email:');
-        break;
-
-      case 'email':
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          addResponse('error', 'Invalid email format');
-          addResponse('prompt', 'Please enter your email:');
-          return;
-        }
-        setFormData(prev => ({ ...prev, email: value }));
-        setCurrentInput('date');
-        addResponse('prompt', 'Enter booking date (YYYY-MM-DD):');
-        break;
-
-      case 'date':
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-          addResponse('error', 'Invalid date format. Use YYYY-MM-DD');
-          addResponse('prompt', 'Enter booking date (YYYY-MM-DD):');
-          return;
-        }
-        setFormData(prev => ({ ...prev, date: value }));
-        setCurrentInput('time');
-        addResponse('prompt', 'Enter booking time (HH:MM):');
-        break;
-
-      case 'time':
-        if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(value)) {
-          addResponse('error', 'Invalid time format. Use HH:MM');
-          addResponse('prompt', 'Enter booking time (HH:MM):');
-          return;
-        }
-        setFormData(prev => ({ ...prev, time: value }));
-        setCurrentInput('partySize');
-        addResponse('prompt', 'Enter number of guests:');
-        break;
-
-      case 'partySize':
-        if (isNaN(Number(value)) || Number(value) < 1) {
-          addResponse('error', 'Party size must be at least 1');
-          addResponse('prompt', 'Enter number of guests:');
-          return;
-        }
-        setFormData(prev => ({ ...prev, partySize: value }));
-        setCurrentInput('pancakeType');
-        addResponse('info', '\nAvailable pancake types:');
-        MENU_OPTIONS.pancakeTypes.forEach((type, i) => 
-          addResponse('info', `${i + 1}. ${type}`)
-        );
-        addResponse('prompt', 'Select pancake type (enter number):');
-        break;
-
-      case 'pancakeType':
-        const pancakeIndex = Number(value) - 1;
-        if (isNaN(pancakeIndex) || pancakeIndex < 0 || pancakeIndex >= MENU_OPTIONS.pancakeTypes.length) {
-          addResponse('error', 'Invalid selection');
-          addResponse('prompt', 'Select pancake type (enter number):');
-          return;
-        }
-        setFormData(prev => ({
-          ...prev,
-          preferences: {
-            ...prev.preferences,
-            pancakeType: MENU_OPTIONS.pancakeTypes[pancakeIndex]
-          }
-        }));
-        handleSubmit();
-        break;
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isSubmitting) {
-      const input = e.currentTarget as HTMLInputElement;
-      handleInputSubmit(input.value);
-      input.value = '';
-    }
+    setResponses(prev => [...prev, { type, message, timestamp }]);
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    addResponse('info', 'Initializing booking request...');
-    addResponse('info', `Connecting to worker at ${WORKER_URL}...`);
+    addResponse('system', 'Processing your booking...');
 
     try {
-      addResponse('info', 'Sending booking request to worker...');
       const response = await fetch('/api/book', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData)
       });
 
-      const result = await response.json();
-      addResponse('info', 'Response received from worker');
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Booking failed');
+        throw new Error(data.error || 'Failed to process booking');
       }
 
-      if (result.success) {
-        localStorage.setItem('guestName', formData.name);
-        addResponse('success', 'Booking confirmed!');
-        addResponse('success', `
+      addResponse('success', `
+Booking confirmed! ${data.emailSent ? '' : 'However, we couldn\'t send the confirmation email: ' + data.emailError}
+
 Booking Details:
----------------
-> Date: ${formatDate(formData.date)}
-> Time: ${formData.time}
-> Guests: ${formData.partySize}
-> Menu:
-  - Pancakes: ${formData.preferences.pancakeType}
-  - Eggs: ${formData.preferences.eggStyle || ''}
-  - Sides: ${formData.preferences.sides.join(', ')}
-  - Meat: ${formData.preferences.meat || ''}
-  - Additions: ${formData.preferences.additions.join(', ')}
+Date: ${new Date(bookingData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Time: ${bookingData.time}
+Party Size: ${bookingData.partySize}
 
-Confirmation ID: ${result.data?.confirmationId || 'Pending...'}
-`);
-        // Reset form
-        setFormData({
-          name: '',
-          email: '',
-          date: '',
-          time: '',
-          partySize: '',
-          preferences: {
-            pancakeType: '',
-            eggStyle: '',
-            sides: [],
-            meat: '',
-            additions: []
-          }
-        });
-        setCurrentInput('name');
-        addResponse('prompt', '\nWould you like to make another booking? (Enter name or press Ctrl+C to exit):');
-      }
-    } catch (err) {
-      addResponse('error', err instanceof Error ? err.message : 'Booking failed');
-      addResponse('error', 'Please try again or contact support if the issue persists.');
-      setCurrentInput('name');
-      addResponse('prompt', 'Please enter your name:');
+Menu Selections:
+- Pancakes: ${bookingData.preferences.pancakeType}
+${bookingData.preferences.eggStyle !== 'none' ? `- Eggs: ${bookingData.preferences.eggStyle}` : ''}
+${bookingData.preferences.meat !== 'none' ? `- Meat: ${bookingData.preferences.meat}` : ''}
+
+Confirmation ID: ${data.confirmationId}
+Please save this confirmation ID for your records.`);
+
+      // Reset form
+      setBookingData({
+        name: '',
+        email: '',
+        date: '',
+        time: '',
+        partySize: '',
+        preferences: {
+          pancakeType: '',
+          eggStyle: '',
+          meat: '',
+          sides: [],
+          additions: []
+        }
+      });
+
+      // Ask if they want to make another booking
+      setCurrentStep(steps.length + 1);
+      addResponse('prompt', 'Would you like to make another booking? (yes/no):');
+
+    } catch (error: any) {
+      addResponse('error', `Failed to process booking: ${error.message}`);
+      addResponse('prompt', 'Would you like to try again? (yes/no):');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleCommand = (command: string) => {
+    const normalizedCommand = command.trim().toLowerCase();
+
+    // Add to command history
+    setCommandHistory(prev => [...prev, command]);
+    setHistoryIndex(-1);
+
+    // Handle built-in commands
+    if (commands[normalizedCommand as keyof typeof commands]) {
+      commands[normalizedCommand as keyof typeof commands]();
+      return true;
+    }
+
+    // Handle navigation commands
+    if (normalizedCommand === "cd ..") {
+      setCurrentPath("/");
+      addResponse("system", "Available directories:");
+      addResponse("info", "breakfast/");
+      addResponse("info", "lunch/");
+      addResponse("info", "dinner/");
+      return true;
+    }
+
+    if (normalizedCommand.startsWith("cd ")) {
+      const target = normalizedCommand.slice(3).trim();
+      switch (target) {
+        case "breakfast":
+          window.location.href = "/";
+          return true;
+        case "lunch":
+          window.location.href = "/lunch";
+          return true;
+        case "dinner":
+          window.location.href = "/dinner";
+          return true;
+        default:
+          addResponse("error", `Directory not found: ${target}`);
+          return true;
+      }
+    }
+
+    if (normalizedCommand === "ls" || normalizedCommand === "dir") {
+      if (currentPath === "/") {
+        addResponse("info", "breakfast/");
+        addResponse("info", "lunch/");
+        addResponse("info", "dinner/");
+      } else {
+        addResponse("info", "No subdirectories available in current path");
+      }
+      return true;
+    }
+
+    if (normalizedCommand === "clear") {
+      setResponses([]);
+      return true;
+    }
+
+    if (normalizedCommand === "pwd") {
+      addResponse("info", currentPath || "/");
+      return true;
+    }
+
+    if (normalizedCommand === "book") {
+      setCurrentStep(1);
+      addResponse('system', '📝 Starting booking process...');
+      addResponse('prompt', steps[0].prompt);
+      return true;
+    }
+
+    return false;
+  };
+
+  const availableCommands = [
+    'help',
+    'cd',
+    'ls',
+    'dir',
+    'pwd',
+    'clear',
+    'menu',
+    'history',
+    'book'
+  ];
+
+  const availablePaths = [
+    'breakfast',
+    'lunch',
+    'dinner'
+  ];
+
+  const handleTabCompletion = () => {
+    const input = currentInput.trim();
+    
+    // Don't show suggestions during booking process
+    if (currentStep > 0) return;
+
+    if (!input) {
+      setSuggestions(availableCommands);
+      return;
+    }
+
+    // Handle cd command completion
+    if (input === 'cd ' || input.startsWith('cd ')) {
+      const pathInput = input.slice(3);
+      const matchingPaths = availablePaths.filter(path => 
+        path.startsWith(pathInput) && path !== pathInput
+      );
+      
+      if (matchingPaths.length === 1) {
+        setCurrentInput(`cd ${matchingPaths[0]}`);
+        setSuggestions([]);
+      } else if (matchingPaths.length > 0) {
+        setSuggestions(matchingPaths.map(path => `cd ${path}`));
+      }
+      return;
+    }
+
+    // Handle command completion
+    const matchingCommands = availableCommands.filter(cmd => 
+      cmd.startsWith(input) && cmd !== input
+    );
+
+    if (matchingCommands.length === 1) {
+      setCurrentInput(matchingCommands[0]);
+      setSuggestions([]);
+    } else if (matchingCommands.length > 0) {
+      setSuggestions(matchingCommands);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !isSubmitting) {
+      handleInput(currentInput);
+      setSuggestions([]);
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      handleTabCompletion();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (historyIndex < commandHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setCurrentInput(commandHistory[commandHistory.length - 1 - newIndex]);
+        setSuggestions([]);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setCurrentInput(commandHistory[commandHistory.length - 1 - newIndex]);
+      } else if (historyIndex === 0) {
+        setHistoryIndex(-1);
+        setCurrentInput("");
+      }
+      setSuggestions([]);
+    } else if (e.key === "Escape") {
+      setSuggestions([]);
+    }
+  };
+
+  const handleInput = async (input: string) => {
+    const trimmedInput = input.trim().toLowerCase();
+    
+    // Don't add empty commands to history
+    if (trimmedInput && currentStep === 0) {
+      setCommandHistory([...commandHistory, trimmedInput]);
+      setHistoryIndex(-1);
+    }
+    
+    setCurrentInput("");
+
+    // During booking process
+    if (currentStep > 0) {
+      handleBookingStep(trimmedInput);
+      return;
+    }
+
+    // Handle commands
+    switch (trimmedInput) {
+      case "help":
+        addResponse('system', `
+Available commands:
+  cd [dir]     - Change directory (breakfast/lunch/dinner)
+  ls, dir      - List available directories
+  pwd          - Print working directory
+  clear        - Clear the terminal
+  menu         - Show today's menu
+  history      - Show command history
+  help         - Show this help message
+  book         - Start booking process`);
+        break;
+
+      case "clear":
+        setResponses([]);
+        break;
+
+      case "menu":
+        await fetchMenu();
+        break;
+
+      case "pwd":
+        addResponse('system', currentPath);
+        break;
+
+      case "ls":
+      case "dir":
+        addResponse('system', 'Available directories:\n  breakfast/\n  lunch/\n  dinner/');
+        break;
+
+      case "history":
+        if (commandHistory.length === 0) {
+          addResponse('system', 'No command history');
+        } else {
+          addResponse('system', commandHistory.map((cmd, i) => 
+            `${(commandHistory.length - i).toString().padStart(4)} ${cmd}`
+          ).join('\n'));
+        }
+        break;
+
+      case "book":
+        startBooking();
+        break;
+
+      default:
+        if (trimmedInput.startsWith("cd ")) {
+          const newPath = trimmedInput.slice(3).trim();
+          if (newPath === "..") {
+            setCurrentPath("/");
+            await fetchMenu();
+          } else if (["breakfast", "lunch", "dinner"].includes(newPath)) {
+            setCurrentPath(`/${newPath}`);
+            await fetchMenu();
+          } else {
+            addResponse('error', `Directory not found: ${newPath}`);
+          }
+        } else if (trimmedInput !== "") {
+          addResponse('error', `Command not found: ${trimmedInput}`);
+        }
+        break;
+    }
+  };
+
+  const startBooking = () => {
+    setCurrentStep(1);
+    addResponse('system', '📝 Starting booking process...');
+    addResponse('prompt', steps[0].prompt);
+  };
+
+  const handleBookingStep = (input: string) => {
+    const value = input.trim();
+    addResponse('input', value);
+
+    if (!value) {
+      addResponse('error', 'Please provide a valid input');
+      addResponse('prompt', steps[currentStep - 1].prompt);
+      return;
+    }
+
+    // Validate current step
+    const currentStepData = steps[currentStep - 1];
+    if (!validateInput(value, currentStepData.validation)) {
+      addResponse('error', currentStepData.error);
+      addResponse('prompt', currentStepData.prompt);
+      return;
+    }
+
+    // Convert numbered options to actual values
+    let processedValue = value;
+    if (currentStepData.options && currentStepData.options[value]) {
+      processedValue = currentStepData.options[value];
+    }
+
+    // Store the value
+    if (currentStepData.field.includes('.')) {
+      const [parent, child] = currentStepData.field.split('.');
+      setBookingData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: processedValue
+        }
+      }));
+    } else {
+      setBookingData(prev => ({ ...prev, [currentStepData.field]: processedValue }));
+    }
+
+    // Handle confirmation
+    if (currentStep === steps.length && value.toLowerCase() === 'yes') {
+      handleSubmit();
+      return;
+    }
+
+    // Move to next step
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+      if (currentStep < steps.length) {
+        addResponse('prompt', steps[currentStep].prompt);
+      }
+    }
+  };
+
+  useEffect(() => {
+    addResponse('system', '🍽️  Welcome to Chef Chiso\'s Terminal!');
+    addResponse('system', 'Type \'help\' for available commands.');
+    fetchMenu();
+  }, []);
+
   return (
     <div className={styles.terminal}>
       <div className={styles.terminalHeader}>
-        <span>Eat with Chiso Terminal Booking System v1.0.0</span>
+        Chef Chiso's Terminal - {currentPath === "/" ? "Home" : currentPath.slice(1).charAt(0).toUpperCase() + currentPath.slice(2)}
       </div>
-      
       <div className={styles.terminalBody} ref={terminalRef}>
-        <div className={styles.terminalPrompt}>
-          <span className={styles.promptUser}>{formData.name || 'guest'}</span>
-          <span className={styles.promptAt}>@</span>
-          <span className={styles.promptHost}>eatwchiso</span>
-          <span className={styles.promptColon}>:~$</span>
-          <span className={styles.promptCommand}> ./book-breakfast.sh</span>
-        </div>
-
         <div className={styles.responses}>
           {responses.map((response, index) => (
-            <pre key={index} className={`${styles.response} ${styles[response.type]}`}>
-              {response.type !== 'prompt' && `${response.timestamp} [${response.type.toUpperCase()}] `}{response.message}
-            </pre>
+            <div key={index} className={`${styles.response} ${styles[response.type]}`}>
+              {response.message}
+            </div>
           ))}
         </div>
-
-        <div className={styles.inputLine}>
-          <span className={styles.promptSymbol}>$</span>
-          <input
-            ref={inputRef}
-            type="text"
-            className={styles.terminalInput}
-            onKeyPress={handleKeyPress}
-            disabled={isSubmitting}
-            autoFocus
-          />
+        <div className={styles.inputContainer}>
+          <div className={styles.inputLine}>
+            <div className={styles.inputPrompt}>
+              <span className={styles.promptUser}>chiso</span>
+              <span>@</span>
+              <span className={styles.inputPromptPath}>terminal</span>
+              <span className={styles.promptArrow}>➜</span>
+              <span className={styles.promptPath}>{currentPath}</span>
+            </div>
+            <input
+              type="text"
+              className={styles.terminalInput}
+              value={currentInput}
+              onChange={(e) => {
+                setCurrentInput(e.target.value);
+                if (e.target.value.length > 0) {
+                  handleTabCompletion();
+                } else {
+                  setSuggestions([]);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting}
+              autoFocus
+            />
+          </div>
+          {suggestions.length > 0 && (
+            <div className={styles.suggestions}>
+              {suggestions.map((suggestion, index) => (
+                <span
+                  key={index}
+                  className={styles.suggestion}
+                  onClick={() => {
+                    setCurrentInput(suggestion);
+                    setSuggestions([]);
+                  }}
+                >
+                  {suggestion}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
