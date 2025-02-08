@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    @apply bg-[#1a1b26] text-terminal-green;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23A3BE8C' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+
+  input[type="checkbox"] {
+    @apply rounded border-[#414868] bg-[#24283b] text-terminal-brightGreen focus:ring-terminal-cyan;
+  }
+
+  button {
+    @apply transition-all duration-200;
+  }
+
+  button:hover:not(:disabled) {
+    @apply bg-terminal-blue text-terminal-white transform scale-105;
+  }
+
+  button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  pre {
+    @apply font-mono;
+  }
+
+  .terminal-output {
+    @apply rounded-lg bg-[#24283b] p-4;
+  }
+
+  .terminal-history {
+    @apply border border-[#414868] rounded-lg p-4 bg-[#1a1b26];
+  }
+
+  input, select {
+    @apply bg-[#24283b] text-terminal-brightWhite border-[#414868] focus:border-terminal-cyan focus:ring-terminal-cyan;
+  }
+
+  label {
+    @apply text-terminal-brightCyan;
+  }
+
+  .error-message {
+    @apply text-terminal-red text-sm mt-1;
+  }
+
+  /* Terminal-style scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-[#1a1b26];
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-[#414868] rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-terminal-blue;
+  }
+}

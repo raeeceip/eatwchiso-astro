@@ -1,0 +1,129 @@
+/* Global theme variables */
+:root {
+  --color-background: #0A0A0A;
+  --color-text: #FF6600;
+  --color-text-secondary: #993D00;
+  --color-accent: #FF6600;
+  --color-success: #00FF66;
+  --color-error: #FF3300;
+  --font-mono: 'Courier New', monospace;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base styles */
+html {
+  background-color: var(--color-background);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-accent);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin: 2rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  transition: opacity 0.3s ease;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* Layout */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+main {
+  flex: 1;
+  padding: 2rem 0;
+}
+
+/* Form elements */
+input, select, textarea {
+  background-color: transparent;
+  border: 1px solid var(--color-text);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  padding: 0.5rem;
+}
+
+button {
+  background-color: var(--color-accent);
+  color: var(--color-background);
+  border: none;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Terminal-like elements */
+pre, code {
+  background-color: #111;
+  color: var(--color-text);
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  overflow-x: auto;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}

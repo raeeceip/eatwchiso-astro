@@ -1,0 +1,54 @@
+---
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Book your breakfast experience with Chiso" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body class="min-h-screen bg-terminal-black text-terminal-white">
+		<slot />
+	</body>
+</html>
+
+<style is:global>
+	:root {
+		--font-mono: 'JetBrains Mono', Menlo, Monaco, 'Courier New', monospace;
+	}
+	html {
+		font-family: var(--font-mono);
+		background: #1a1b26;
+		color: #a9b1d6;
+	}
+	body {
+		margin: 0;
+		padding: 0;
+	}
+	.terminal-black { background-color: #1a1b26; }
+	.terminal-red { background-color: #f7768e; }
+	.terminal-green { background-color: #9ece6a; }
+	.terminal-yellow { background-color: #e0af68; }
+	.terminal-blue { background-color: #7aa2f7; }
+	.terminal-magenta { background-color: #bb9af7; }
+	.terminal-cyan { background-color: #7dcfff; }
+	.terminal-white { color: #a9b1d6; }
+	.terminal-brightBlack { background-color: #24283b; }
+	.terminal-brightRed { color: #f7768e; }
+	.terminal-brightGreen { color: #9ece6a; }
+	.terminal-brightYellow { color: #e0af68; }
+	.terminal-brightBlue { color: #7aa2f7; }
+	.terminal-brightMagenta { color: #bb9af7; }
+	.terminal-brightCyan { color: #7dcfff; }
+	.terminal-brightWhite { color: #c0caf5; }
+</style>

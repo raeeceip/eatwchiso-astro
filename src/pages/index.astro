@@ -1,16 +1,27 @@
 ---
-
+import Layout from '../layouts/Layout.astro';
+import { BookingForm } from '../components/BookingForm';
+import '../styles/global.css';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Eat with Chiso - Terminal Booking System">
+  <main>
+    <div class="container">
+      <BookingForm client:load />
+    </div>
+  </main>
+</Layout>
+
+<style>
+  main {
+    min-height: 100vh;
+    padding: 2rem 0;
+    background-color: var(--color-background);
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+</style>

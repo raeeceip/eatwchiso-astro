@@ -1,0 +1,7 @@
+name = "eatwchiso-email"
+main = "src/index.ts"
+compatibility_date = "2024-02-08"
+
+[vars]
+# You'll need to set this secret using `wrangler secret put SENDGRID_API_KEY`
+# SENDGRID_API_KEY = "your-api-key"

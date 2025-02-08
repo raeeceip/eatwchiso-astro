@@ -1,0 +1,11 @@
+name = "eatwchiso"
+compatibility_date = "2024-02-07"
+pages_build_output_dir = "dist"
+
+[vars]
+RESEND_API_KEY = ""
+
+[[durable_objects.bindings]]
+name = "BOOKINGS"
+class_name = "BookingsStore"
+script_name = "eatwchiso-bookings"

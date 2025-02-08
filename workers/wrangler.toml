@@ -1,0 +1,14 @@
+name = "eatwchiso-bookings"
+main = "bookings.js"
+compatibility_date = "2024-02-07"
+
+[vars]
+RESEND_API_KEY = ""
+
+[[durable_objects.bindings]]
+name = "BOOKINGS"
+class_name = "BookingsStore"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["BookingsStore"]
