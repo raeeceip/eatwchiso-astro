@@ -114,8 +114,8 @@ Chef Chiso`;
     if (resend) {
       try {
         const result = await resend.emails.send({
-          from: 'onboarding@resend.dev', // Keep this for now until domain is verified
-          reply_to: 'Chiso <chiboguchisomu@gmail.com>', // Replies will go to your Gmail
+          from: 'Chef Chiso <chiso@eatwithchiso.com>',
+ 
           to: body.email,
           subject: 'Your Chef Chiso Booking Confirmation',
           text: emailContent,

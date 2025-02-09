@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './BookingForm.module.css';
 
 interface BookingFormData {
@@ -597,7 +597,7 @@ Available commands:
   };
 
   useEffect(() => {
-    addResponse('system', '🍽️  Welcome to Chef Chiso\'s Terminal!');
+    addResponse('system', '🍽️  Welcome to EatWithChiso Terminal!');
     addResponse('system', 'Type \'help\' for available commands.');
     fetchMenu();
   }, []);
@@ -605,7 +605,7 @@ Available commands:
   return (
     <div className={styles.terminal}>
       <div className={styles.terminalHeader}>
-        Chef Chiso's Terminal - {currentPath === "/" ? "Home" : currentPath.slice(1).charAt(0).toUpperCase() + currentPath.slice(2)}
+        Terminal - {currentPath === "/" ? "Home" : currentPath.slice(1).charAt(0).toUpperCase() + currentPath.slice(2)}
       </div>
       <div className={styles.terminalBody} ref={terminalRef}>
         <div className={styles.responses}>

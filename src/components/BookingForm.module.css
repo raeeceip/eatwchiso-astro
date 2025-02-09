@@ -1,6 +1,6 @@
 .terminal {
   background-color: #0A0A0A;
-  color: #FF6600;
+  color: #C0C0C0;
   width: 100%;
   height: 100vh;
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
@@ -10,12 +10,12 @@
 }
 
 .terminalHeader {
-  background-color: #FF6600;
+  background: linear-gradient(145deg, #D4D4D4, #A4A4A4);
   color: #0A0A0A;
   padding: 0.5rem 1rem;
   font-weight: bold;
   font-size: clamp(0.75rem, 2vw, 0.875rem);
-  border-bottom: 1px solid #FF8533;
+  border-bottom: 1px solid #808080;
   user-select: none;
   white-space: nowrap;
   overflow: hidden;
@@ -23,6 +23,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .terminalBody {
@@ -48,23 +49,23 @@
 }
 
 .promptArrow {
-  color: #FF6600;
+  color: #E8E8E8;
   margin: 0 0.25rem;
 }
 
 .promptPath {
-  color: #00A4EF;
+  color: #D4D4D4;
   font-weight: bold;
   word-break: break-all;
 }
 
 .promptGit {
-  color: #7FBA00;
+  color: #90EE90;
   margin-left: 0.5rem;
 }
 
 .promptBranch {
-  color: #FF6600;
+  color: #E8E8E8;
   margin-left: 0.25rem;
 }
 
@@ -80,40 +81,41 @@
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   line-height: 1.4;
   word-break: break-word;
+  color: #A4A4A4;
 }
 
 .response.info {
-  color: #FF6600;
+  color: #E8E8E8;
 }
 
 .response.error {
-  color: #FF4444;
+  color: #FF6B6B;
 }
 
 .response.success {
-  color: #7FBA00;
+  color: #90EE90;
 }
 
 .response.system {
-  color: #CCCCCC;
+  color: #E8E8E8;
 }
 
 .response.input {
-  color: #FF8533;
+  color: #E8E8E8;
   font-weight: bold;
 }
 
 .response.prompt {
-  color: #00A4EF;
+  color: #D4D4D4;
 }
 
 .response.menu {
-  color: #FF6600;
+  color: #D4D4D4;
   margin: 0.5rem 0;
   padding: 0.5rem;
-  border: 1px solid #FF6600;
+  border: 1px solid #D4D4D4;
   border-radius: 4px;
-  background-color: rgba(255, 102, 0, 0.1);
+  background-color: rgba(212, 212, 212, 0.1);
   overflow-x: auto;
   max-width: 100%;
   box-sizing: border-box;
@@ -126,27 +128,27 @@
 .menuSection {
   margin: 1rem 0;
   padding: 0.5rem;
-  border: 1px solid rgba(255, 102, 0, 0.3);
+  border: 1px solid rgba(212, 212, 212, 0.3);
   border-radius: 4px;
-  background-color: rgba(255, 102, 0, 0.05);
+  background-color: rgba(212, 212, 212, 0.05);
 }
 
 .menuTitle {
-  color: #FF8533;
+  color: #E8E8E8;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255, 102, 0, 0.2);
+  border-bottom: 1px solid rgba(212, 212, 212, 0.2);
   padding-bottom: 0.25rem;
 }
 
 .menuCategory {
   margin: 1rem 0;
   padding-left: 0.5rem;
-  border-left: 2px solid rgba(255, 102, 0, 0.3);
+  border-left: 2px solid rgba(212, 212, 212, 0.3);
 }
 
 .menuCategoryTitle {
-  color: #FF8533;
+  color: #E8E8E8;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
@@ -164,12 +166,12 @@
 }
 
 .menuItemName {
-  color: #FF6600;
+  color: #E8E8E8;
   font-weight: bold;
 }
 
 .menuPrice {
-  color: #7FBA00;
+  color: #90EE90;
   white-space: nowrap;
 }
 
@@ -178,7 +180,7 @@
   font-size: 0.875em;
   margin-top: 0.25rem;
   padding-left: 1rem;
-  border-left: 1px solid rgba(255, 102, 0, 0.2);
+  border-left: 1px solid rgba(212, 212, 212, 0.2);
 }
 
 .inputLine {
@@ -192,7 +194,7 @@
 .inputPrompt {
   display: flex;
   align-items: center;
-  color: #FF6600;
+  color: #E8E8E8;
   margin-right: 0.5rem;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -200,7 +202,7 @@
 }
 
 .inputPromptPath {
-  color: #00A4EF;
+  color: #D4D4D4;
   margin: 0 0.25rem;
   word-break: break-all;
 }
@@ -208,17 +210,18 @@
 .terminalInput {
   background-color: transparent;
   border: none;
-  color: #FF8533;
+  color: #E8E8E8;
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
   font-size: clamp(0.75rem, 2vw, 0.875rem);
   padding: 0;
   flex: 1;
   min-width: 50px;
   outline: none;
+  caret-color: #E8E8E8;
 }
 
 .terminalInput::placeholder {
-  color: #993D00;
+  color: #666666;
 }
 
 .terminalInput:disabled {
@@ -231,7 +234,7 @@
   bottom: 0;
   background-color: #0A0A0A;
   padding: 0.5rem;
-  border-top: 1px solid rgba(255, 102, 0, 0.2);
+  border-top: 1px solid rgba(212, 212, 212, 0.2);
   margin: 0 -0.5rem;
 }
 
@@ -246,7 +249,7 @@
 }
 
 .suggestion {
-  color: #FF8533;
+  color: #E8E8E8;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -273,12 +276,12 @@
 }
 
 .terminalBody::-webkit-scrollbar-thumb {
-  background: #FF6600;
+  background: #D4D4D4;
   border-radius: 4px;
 }
 
 .terminalBody::-webkit-scrollbar-thumb:hover {
-  background: #FF8533;
+  background: #E8E8E8;
 }
 
 /* Mobile optimizations */
